@@ -1,0 +1,31 @@
+body{
+    overflow-x: hidden;
+    background: rgb(196, 195, 195);
+}
+#view{
+    cursor: crosshair;
+}
+
+#frame{
+    display: flex;
+    justify-content: center;
+}
+
+
+#sidebar{
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#sidebar button{
+    margin: 1rem 0;
+}
+
+.point{
+    cursor: pointer;
+}
+
+.point:hover{
+    stroke: orange;
+}
