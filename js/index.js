@@ -27,39 +27,44 @@ view.addEventListener("click", e => {
     } else if(option == "delete"){
         deletePoint(e)
     }
-    updateUI()
-    
+    updateUI() 
     pointEventsHandler()
     
 })
 
 //DATA CONTROL
 
-const connect = (selected, curr) => {
-    const selected_str = `${selected.x},${selected.y}`
-    const curr_str = `${curr.x},${curr.y}`
+const connect = (from, to) => {
+    const from_str = `${from.x},${from.y}`
+    const to_str = `${to.x},${to.y}`
     //If already connected to two return
+    if(area.bounds[to_str].length == 2 || area.bounds[from_str].length == 2){
+        return
+    }
     //If already connected to curr delete connection
     //Else connect selected and curr
-    if(area.bounds[selected_str].includes(curr_str)){
-        area.bounds[selected_str] = area.bounds[selected_str].filter(coord => coord != curr_str)
-        area.bounds[curr_str] = area.bounds[curr_str].filter(coord => coord != selected_str)
+    if(area.bounds[to_str].includes(from_str)){
+        area.bounds[from_str] = area.bounds[from_str].filter(coord => coord != to_str)
+        area.bounds[to_str] = area.bounds[to_str].filter(coord => coord != from_str)
     }else{
         for(let edge in area.bounds){
             const coord = to_coords(edge)
-            if(coord.x == curr.x && coord.y == curr.y){
-                area.bounds[edge].push(`${selected.x},${selected.y}`)
-            } else if(coord.x == selected.x && coord.y == selected.y){
-                area.bounds[edge].push(`${curr.x},${curr.y}`)
+            if(coord.x == to.x && coord.y == to.y){
+                area.bounds[edge].push(from_str)
+             
+            }else if(coord.x == from.x && coord.y == from.y){
+                area.bounds[edge].push(to_str)
+          
             }
         }
     }
 
-    console.log(`connected (${curr.x}, ${curr.y}) with (${selected.x}, ${selected.y}) `)
+    //selected = null //Option == Point 
+    console.log(`connected (${to.x}, ${to.y}) with (${from.x}, ${from.y}) `)
 }
 
 const pointEventsHandler = () => {
-    if(option == "point" ){
+    if(option != "delete" ){
         let points = document.querySelectorAll(".point");
         points.forEach(point => {
             point.addEventListener("click", e => selectPoint(e))    
@@ -72,14 +77,11 @@ const pointEventsHandler = () => {
                 if(selected.x == curr.x && selected.y == curr.y){
                     selected = null
                 } else {
-                    console.log(curr)
                     connect(selected, curr)
-                    selected = curr //Option == Line
-                    //selected = null //Option == Point 
+                    selected = curr
                 }
             } else{
                 selected = curr
-                console.log(selected)
             }
         }
     }
@@ -127,24 +129,28 @@ const createPoint = e => {
         const {layerX, layerY} = e
         area.bounds[`${layerX},${layerY}`] = []
         //Option == Line
+        let curr = {x: layerX, y: layerY}
         if(selected){
-            area.bounds[`${layerX},${layerY}`].push(`${selected.x},${selected.y}`)
-            
+            connect(selected, curr)
         }
-        //Option == Line
-        selected = {x: layerX, y: layerY}
+        selected = curr
     }
 }
 
 const deletePoint = e => {
-    const {layerX, layerY} = e 
-    const coords = `${layerX},${layerY}`
-    if(e.target.classList.contains("point") && area.bounds.hasOwnProperty(coords)) {  
+    if(e.target.classList.contains("point")) {  
+        const x = e.target.cx.animVal.value
+        const y = e.target.cy.animVal.value
+        const coords = `${x},${y}`
         delete area.bounds[coords]
         for(let edge in area.bounds){
             area.bounds[edge] = area.bounds[edge].filter(c => c != coords)
         }
+        selected = null
+   
    }
+
+  
 }
 
 
