@@ -2,24 +2,29 @@
 var selected = null
 var option = "point"
 
+
+
 //AREA DATA
 var area = {
     width: 1000,
-    height: 500,
+    height: 300,
     scale: 1,
     rotation: 0,
     bounds: {},
     rooms: []
 }
 
-const to_coords = coord_string => {
-    const coord = coord_string.split(",")
-    const [x,y] = coord
-    return {x, y}
-}
 
-//VIEW CONTROL
+
+//VIEW SETUP
 const view = document.querySelector("#view");
+var ctx = view.getContext("2d");
+const {width, height} = area
+ctx.canvas.width = width
+ctx.canvas.height = height
+ctx.fillStyle = "white";
+ctx.fillRect(0, 0, width, height);
+
 view.addEventListener("click", e => {
 
     if(option == "point"){
@@ -91,45 +96,50 @@ const pointEventsHandler = () => {
 
 //UI CONTROL
 const updateUI = () => {
-    let svg_edges = ""
-    let svg_vertices = ""
-
+    
     for(let edge in area.bounds){
         let coords = to_coords(edge)
-        let selected_str = selected ? `${selected.x},${selected.y}` : ""
         const {x, y} = coords
-        svg_edges += `<circle cx=${x} cy=${y} class="point" r="2" stroke="${edge == selected_str ? "orange": "lightgreen"}" stroke-width="7" />`
-        area.bounds[edge].forEach(vertex => {
-            let vcoords = to_coords(vertex)
-            svg_vertices += `<line x1=${x} y1=${y} x2=${vcoords.x} y2=${vcoords.y} style="stroke:black;stroke-width:2" />`
-        })
+        
+        ctx.fillStyle = "lightgreen";
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, 2 * Math.PI, true);
+        ctx.fill()
     }
-  
-
-    let shape = `
-    <svg width="1000" height="500">
-        ${svg_edges}
-        ${svg_vertices}
-    </svg>
+      
     
-    `
-    
-    view.innerHTML = shape
     
 }
 
+//HELPERS
+const to_coords = coord_string => {
+    const coord = coord_string.split(",")
+    const [x,y] = coord
+    return {x, y}
+}
+
+const get_coords = e => {
+    let rect = view.getBoundingClientRect()
+    let x = (e.clientX - rect.left)*view.width / rect.width;
+    let y = (e.clientY - rect.top) *view.height / rect.height;
+    return {x, y}
+}
 
 
 //OPTION - FUNCTIONS
+
 const selectOption = opt => {
     option = opt 
 }
+
 const createPoint = e => {
-     if(!e.target.classList.contains("point")) {
-        const {layerX, layerY} = e
-        area.bounds[`${layerX},${layerY}`] = []
+    const {x, y} = get_coords(e)
+    const coords = `${x},${y}`
+    if(!area.bounds.hasOwnProperty(coords)) {
+        
+        area.bounds[coords] = []
         //Option == Line
-        let curr = {x: layerX, y: layerY}
+        let curr = {x, y}
         if(selected){
             connect(selected, curr)
         }
@@ -138,16 +148,16 @@ const createPoint = e => {
 }
 
 const deletePoint = e => {
-    if(e.target.classList.contains("point")) {  
-        const x = e.target.cx.animVal.value
-        const y = e.target.cy.animVal.value
-        const coords = `${x},${y}`
+    const {x, y} = get_coords(e)
+    const coords = `${x},${y}`
+    console.log(x,y)
+    if(area.bounds.hasOwnProperty(coords)) {  
+       
         delete area.bounds[coords]
         for(let edge in area.bounds){
             area.bounds[edge] = area.bounds[edge].filter(c => c != coords)
         }
         selected = null
-   
    }
 
   
